@@ -1,4 +1,4 @@
-# Editora™
+# Editora™ - Fast and Simple WYSIWYG Editor
 Editora™ is a JavaScript-based WYSIWYG HTML editor that runs in the browser, letting anyone edit content easily, fast, and intuitively.  
 Because it’s built with plain HTML and JavaScript, you can freely extend and customize it.
 
