@@ -1,4 +1,5 @@
 function createEditor(container) {
+  container.classList.add("editor-wrapper");
   // Editor HTML structure
   container.innerHTML = `
     <div class="editor-toolbar p-2 rounded-top">
@@ -58,18 +59,19 @@ function createEditor(container) {
     <div id="editor" class="form-control" contenteditable="true">
       <p>여기에 내용을 입력하세요.</p>
     </div>
-    <textarea name="content" id="hiddenTextarea" style="display: none"></textarea>
   `;
 
   const editor = container.querySelector("#editor");
-  const hiddenTextarea = container.querySelector("#hiddenTextarea");
+  const hiddenTextarea = document.getElementById("hiddenTextarea");
   let savedRange = null;
 
-  // Sync editor content to hidden textarea on input
-  editor.addEventListener("input", () => {
+  if (hiddenTextarea) {
+    // Sync editor content to hidden textarea on input
+    editor.addEventListener("input", () => {
+      hiddenTextarea.value = editor.innerHTML;
+    });
     hiddenTextarea.value = editor.innerHTML;
-  });
-  hiddenTextarea.value = editor.innerHTML;
+  }
 
   // -------------------- Dropdown Handling --------------------
   function hideDropdown(dropdown) {
@@ -104,8 +106,104 @@ function createEditor(container) {
     updateToolbar();
   }
 
+  // 새로운 정렬 함수 - 더 단순하고 확실한 방법
+  function applyAlignment(alignmentType) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    // 에디터에 포커스
+    editor.focus();
+
+    // 현재 선택된 범위 가져오기
+    const range = selection.getRangeAt(0);
+
+    // 선택된 텍스트의 부모 블록 요소 찾기
+    let blockElement = range.commonAncestorContainer;
+
+    // 텍스트 노드인 경우 부모 요소로
+    if (blockElement.nodeType === Node.TEXT_NODE) {
+      blockElement = blockElement.parentElement;
+    }
+
+    // 블록 요소가 아니면 가장 가까운 블록 요소 찾기
+    while (
+      blockElement &&
+      blockElement !== editor &&
+      !isBlockLevelElement(blockElement)
+    ) {
+      blockElement = blockElement.parentElement;
+    }
+
+    // 적절한 블록 요소를 찾지 못한 경우 새로운 p 태그로 감싸기
+    if (!blockElement || blockElement === editor) {
+      document.execCommand("formatBlock", false, "p");
+      // 다시 시도
+      const newSelection = window.getSelection();
+      if (newSelection.rangeCount) {
+        const newRange = newSelection.getRangeAt(0);
+        blockElement = newRange.commonAncestorContainer;
+        if (blockElement.nodeType === Node.TEXT_NODE) {
+          blockElement = blockElement.parentElement;
+        }
+      }
+    }
+
+    if (blockElement && blockElement !== editor) {
+      // 정렬 스타일 적용
+      const currentAlign = blockElement.style.textAlign;
+
+      if (currentAlign === alignmentType) {
+        // 이미 같은 정렬이면 제거 (기본값으로)
+        blockElement.style.textAlign = "";
+      } else {
+        // 새로운 정렬 적용
+        blockElement.style.textAlign = alignmentType;
+      }
+    }
+
+    // 툴바 업데이트
+    updateToolbar();
+  }
+
+  // 블록 레벨 요소인지 확인하는 함수 개선
+  function isBlockLevelElement(element) {
+    if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
+
+    const blockTags = [
+      "P",
+      "H1",
+      "H2",
+      "H3",
+      "H4",
+      "H5",
+      "H6",
+      "DIV",
+      "BLOCKQUOTE",
+      "PRE",
+      "UL",
+      "OL",
+      "LI",
+      "TD",
+      "TH",
+      "TR",
+      "TABLE",
+    ];
+
+    return (
+      blockTags.includes(element.tagName) ||
+      window.getComputedStyle(element).display === "block"
+    );
+  }
+
+  function isBlockElement(node) {
+    if (node.nodeType !== Node.ELEMENT_NODE) return false;
+    const display = window.getComputedStyle(node).display;
+    return (
+      display === "block" || display === "list-item" || display === "table-cell"
+    );
+  }
+
   function insertNodeAtCursor(node) {
-    restoreSelection();
     const sel = window.getSelection();
     if (!sel.rangeCount) return;
 
@@ -130,19 +228,11 @@ function createEditor(container) {
       range.setStartAfter(node);
       range.collapse(true);
       sel.removeAllRanges();
-      sel.addRange(range);
+      sel.addRange(newRange);
     }
   }
 
-  // -------------------- Link & Media Functions --------------------
-  function getYouTubeVideoId(url) {
-    const regExp =
-      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
-  }
-
-  // -------------------- Toolbar Update & Selection Handling --------------------
+  // -------------------- Toolbar Update --------------------
   editor.addEventListener("keyup", updateToolbar);
   editor.addEventListener("mouseup", updateToolbar);
   editor.addEventListener("focus", updateToolbar);
@@ -156,9 +246,6 @@ function createEditor(container) {
       "strikeThrough",
       "insertUnorderedList",
       "insertOrderedList",
-      "justifyLeft",
-      "justifyCenter",
-      "justifyRight",
     ];
     commands.forEach((command) => {
       const button = container.querySelector(
@@ -169,15 +256,57 @@ function createEditor(container) {
       }
     });
 
+    // 정렬 버튼 활성 상태 업데이트 - 개선된 로직
+    updateAlignmentButtons();
+
     const formatButton = container.querySelector("#format-button");
     if (formatButton) {
       let blockTag = document.queryCommandValue("formatBlock");
-      if (blockTag === "" || blockTag === "div") {
-        blockTag = "p";
-      }
+      if (blockTag === "" || blockTag === "div") blockTag = "p";
       const formatName = formats[blockTag] || "본문";
       formatButton.textContent = formatName;
     }
+  }
+
+  // 정렬 버튼 상태 업데이트 함수
+  function updateAlignmentButtons() {
+    const selection = window.getSelection();
+    let currentAlign = "";
+
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      let element = range.commonAncestorContainer;
+
+      // 텍스트 노드인 경우 부모 요소로
+      if (element.nodeType === Node.TEXT_NODE) {
+        element = element.parentElement;
+      }
+
+      // 블록 요소 찾기
+      while (element && element !== editor && !isBlockLevelElement(element)) {
+        element = element.parentElement;
+      }
+
+      if (element && element !== editor) {
+        currentAlign = element.style.textAlign || "";
+      }
+    }
+
+    // 버튼 상태 업데이트
+    const alignButtons = {
+      justifyLeft: "left",
+      justifyCenter: "center",
+      justifyRight: "right",
+    };
+
+    Object.entries(alignButtons).forEach(([command, alignValue]) => {
+      const button = container.querySelector(
+        `button[data-command="${command}"]`
+      );
+      if (button) {
+        button.classList.toggle("active", currentAlign === alignValue);
+      }
+    });
   }
 
   function saveSelection() {
@@ -196,16 +325,27 @@ function createEditor(container) {
     }
   }
 
-  // Add event listeners to command buttons
+  // -------------------- Button Events --------------------
   container.querySelectorAll("button[data-command]").forEach((button) => {
     button.addEventListener("click", (e) => {
       e.preventDefault();
       const command = button.dataset.command;
-      execCmd(command);
+
+      // 정렬 명령어 처리
+      if (command === "justifyLeft") {
+        applyAlignment("left");
+      } else if (command === "justifyCenter") {
+        applyAlignment("center");
+      } else if (command === "justifyRight") {
+        applyAlignment("right");
+      } else {
+        // 기타 명령어
+        execCmd(command);
+      }
     });
   });
 
-  // -------------------- Pickers & Dropdowns --------------------
+  // -------------------- Pickers --------------------
   const formatPicker = container.querySelector(".format-picker");
   const formatDropdown = container.querySelector("#formatDropdown");
   const formatButton = container.querySelector("#format-button");
@@ -236,7 +376,6 @@ function createEditor(container) {
     h5: "제목 5",
     h6: "제목 6",
   };
-
   Object.entries(formats).forEach(([tag, name]) => {
     const option = document.createElement("div");
     option.className = "format-option";
@@ -274,6 +413,13 @@ function createEditor(container) {
   }
 
   // YouTube Picker
+  function getYouTubeVideoId(url) {
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  }
+
   youtubePicker.querySelector("button").addEventListener("click", (e) => {
     e.stopPropagation();
     saveSelection();
@@ -312,10 +458,10 @@ function createEditor(container) {
   // Table Picker
   tablePicker.querySelector("button").addEventListener("click", (e) => {
     e.stopPropagation();
+    saveSelection();
     toggleDropdown(tableDropdown, "block");
   });
 
-  // Table Creation
   const gridSelector = container.querySelector("#gridSelector");
   const dimensionText = container.querySelector("#dimensionText");
   const maxRows = 10,
@@ -369,11 +515,12 @@ function createEditor(container) {
       const index = parseInt(e.target.dataset.index, 10);
       const rows = Math.floor(index / maxCols) + 1;
       const cols = (index % maxCols) + 1;
+      restoreSelection();
       createTable(rows, cols);
     }
   });
 
-  // Color Palette
+  // Color Picker
   const colors = [
     "#4285F4",
     "#34A853",
@@ -392,7 +539,6 @@ function createEditor(container) {
     "#E91E63",
     "#795548",
   ];
-
   colors.forEach((c) => {
     const div = document.createElement("div");
     div.style.backgroundColor = c;
@@ -414,16 +560,15 @@ function createEditor(container) {
   // -------------------- Global Click Listener --------------------
   document.addEventListener("click", (e) => {
     if (!formatPicker.contains(e.target)) hideDropdown(formatDropdown);
-    if (linkPicker && !linkPicker.contains(e.target))
-      hideDropdown(linkDropdown);
+    if (!linkPicker.contains(e.target)) hideDropdown(linkDropdown);
     if (!youtubePicker.contains(e.target)) hideDropdown(youtubeDropdown);
     if (!colorPicker.contains(e.target)) hideDropdown(colorDropdown);
     if (!tablePicker.contains(e.target)) hideDropdown(tableDropdown);
   });
 
-  // Return a method to get the content
   return {
-    getContent: () => {
+    editorElement: editor,
+    getContent: function () {
       return editor.innerHTML;
     },
   };

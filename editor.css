@@ -1,0 +1,219 @@
+.editor-wrapper {
+  --toss-blue: #3182f6;
+  --toss-blue-light: #e8f3ff;
+  --toss-blue-dark: #1e40af;
+  --toss-gray-50: #f8fafc;
+  --toss-gray-100: #f1f5f9;
+  --toss-gray-200: #e2e8f0;
+  --toss-gray-300: #cbd5e1;
+  --toss-gray-400: #94a3b8;
+  --toss-gray-500: #64748b;
+  --toss-gray-600: #475569;
+  --toss-gray-700: #334155;
+  --toss-gray-800: #1e293b;
+  --toss-gray-900: #0f172a;
+  --border-radius: 12px;
+  --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --box-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.editor-wrapper .editor-toolbar {
+  background-color: #fff;
+  border: 1px solid var(--toss-gray-300);
+  border-bottom: 1px solid var(--toss-gray-300);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 8px;
+}
+
+
+.editor-wrapper .editor-toolbar .btn-light {
+  background-color: #fff;
+  border-color: transparent;
+  color: var(--toss-gray-700);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.editor-wrapper .editor-toolbar .btn-light:hover {
+  background-color: var(--toss-gray-100);
+}
+
+.editor-wrapper .editor-toolbar .btn-light.active {
+  background-color: var(--toss-blue);
+  color: #fff;
+}
+
+.editor-wrapper #editor {
+  height: 300px;
+  border: 1px solid var(--toss-gray-300);
+  border-top: 0;
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+  background-color: #fff;
+  transition: border-color 0.2s ease-in-out;
+  resize: vertical;
+  overflow: auto;
+  padding: 16px;
+}
+
+.editor-wrapper #editor:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.editor-wrapper #editor table.table-bordered td,
+.editor-wrapper #editor table.table-bordered th {
+  border: 1px solid var(--toss-gray-300);
+}
+
+.editor-wrapper #editor .youtube-video-container {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 Aspect Ratio */
+}
+
+.editor-wrapper #editor .youtube-video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Dropdowns */
+.editor-wrapper .format-picker,
+.editor-wrapper .link-picker,
+.editor-wrapper .youtube-picker,
+.editor-wrapper .color-picker,
+.editor-wrapper .table-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.editor-wrapper .format-dropdown,
+.editor-wrapper .link-dropdown,
+.editor-wrapper .youtube-dropdown,
+.editor-wrapper .color-dropdown,
+.editor-wrapper .table-dropdown {
+  display: none; /* Set by JS */
+  position: absolute;
+  top: 40px;
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--toss-gray-200);
+  padding: 10px;
+  z-index: 100;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.editor-wrapper .format-dropdown.hiding,
+.editor-wrapper .link-dropdown.hiding,
+.editor-wrapper .youtube-dropdown.hiding,
+.editor-wrapper .color-dropdown.hiding,
+.editor-wrapper .table-dropdown.hiding {
+  animation: fadeOut 0.15s ease-out;
+}
+
+.editor-wrapper .format-dropdown .format-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s ease-in-out;
+  white-space: nowrap;
+}
+
+.editor-wrapper .format-dropdown .format-option:hover {
+  background-color: var(--toss-gray-100);
+}
+
+.editor-wrapper .link-dropdown,
+.editor-wrapper .youtube-dropdown {
+  min-width: 320px;
+  align-items: center;
+}
+
+.editor-wrapper .link-dropdown input,
+.editor-wrapper .youtube-dropdown input {
+  flex-grow: 1;
+}
+
+.editor-wrapper #confirmLinkButton,
+.editor-wrapper #confirmYouTubeButton {
+  min-width: 45px;
+}
+
+.editor-wrapper .color-dropdown {
+  grid-template-columns: repeat(8, 25px);
+  gap: 5px;
+}
+
+.editor-wrapper .color-dropdown div {
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 0.1s ease-in-out;
+}
+
+.editor-wrapper .color-dropdown div:hover {
+  transform: scale(1.1);
+}
+
+/* Table Grid */
+.editor-wrapper .table-dropdown {
+  padding: 15px;
+  min-width: 300px; /* Adjust for grid */
+}
+
+.editor-wrapper .grid-selector {
+  display: grid;
+  grid-template-columns: repeat(10, 28px);
+  grid-template-rows: repeat(10, 28px);
+  gap: 4px;
+  justify-content: center;
+}
+
+.editor-wrapper .cell {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--toss-gray-300);
+  background: var(--toss-gray-100);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.1s ease-in-out;
+}
+
+.editor-wrapper .cell.active {
+  background: var(--toss-blue);
+  border-color: var(--toss-blue);
+}

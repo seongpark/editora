@@ -22,6 +22,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="editor.css" />
     <style>
       :root {
         --toss-blue: #3182f6;
@@ -436,13 +437,13 @@
         initSmoothScroll();
 
         // 에디터 생성
-        const editor = createEditor(editorContainer);
+        const myEditor = createEditor(editorContainer);
 
         // 폼 제출 처리
         myForm.addEventListener("submit", (e) => {
           e.preventDefault();
 
-          const content = editor.getContent();
+          const content = myEditor.getContent();
 
           if (content.trim()) {
             submittedContent.textContent = content;
