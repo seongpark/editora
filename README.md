@@ -11,8 +11,9 @@ Because it’s built with plain HTML and JavaScript, you can freely extend and c
 Add the **Bootstrap** and **Font Awesome** CDN
 ```html
 <script src="editor_modular.js"></script>
+<link rel="stylesheet" href="editor.css" />
 ```
-Load the <code>editor_moduler.js</code> 
+Load the <code>editor_moduler.js</code> and <code>editor.css</code> 
 ```html
 <div id="editor-container"></div>
 <textarea name="content" id="hiddenTextarea" style="display: none"></textarea>
